@@ -1,0 +1,69 @@
+{
+  "zotero": {
+    "mode": "auto",
+    "base_url": "http://127.0.0.1:23119/api",
+    "library_prefix": "/users/0",
+    "sqlite_path": "./private/zotero.sqlite",
+    "storage_root": "./private/zotero-storage"
+  },
+  "mineru": {
+    "command": "mineru",
+    "output_root": "./data/mineru",
+    "timeout_seconds": 1800,
+    "extra_args": ["-b", "pipeline"]
+  },
+  "ragflow": {
+    "enabled": false,
+    "base_url": "http://127.0.0.1:9380",
+    "api_key_env": "RAGFLOW_API_KEY",
+    "embedding_model": "FILL_WITH_SERVER_MODEL_ID",
+    "upload_original_pdf": true,
+    "fallback_to_preparsed_markdown": true,
+    "default_dataset_key": "papers",
+    "dataset_ids": {
+      "fundamentals": "FILL_WITH_DATASET_ID",
+      "materials": "FILL_WITH_DATASET_ID",
+      "papers": "FILL_WITH_DATASET_ID",
+      "software_manuals": "FILL_WITH_DATASET_ID",
+      "cases": "FILL_WITH_DATASET_ID"
+    }
+  },
+  "storage": {
+    "root": "./data",
+    "index_db": "./data/index.sqlite3",
+    "summary_csv": "./data/document_summary.csv",
+    "temp_root": "./data/tmp",
+    "quota_gb": 50,
+    "reserve_gb": 5
+  },
+  "discovery": {
+    "provider": "openalex",
+    "fallback_provider": "arxiv",
+    "always_query_fallback": true,
+    "queries": [
+      "FDTD electromagnetic simulation mesh PML",
+      "finite difference time domain photonics simulation"
+    ],
+    "limit_per_query": 5,
+    "min_priority_score": 0.45
+  },
+  "review": {
+    "enabled": false,
+    "min_relevance_score": 0.8,
+    "min_quality_score": 0.8,
+    "evidence_mode": "strict"
+  },
+  "model": {
+    "protocol": "anthropic_messages",
+    "base_url": "https://YOUR_MODEL_PROVIDER_ENDPOINT",
+    "model_name": "YOUR_MODEL_ID",
+    "api_key_env": "MODEL_API_KEY",
+    "temperature": 0.0,
+    "max_tokens": 3000,
+    "timeout_seconds": 120
+  },
+  "chunk_quality": {
+    "enabled": true,
+    "min_score": 0.98
+  }
+}

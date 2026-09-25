@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "knowledge-ingestion-workflow-reference"
+version = "0.1.0"
+description = "A traceable, domain-adaptable document ingestion and RAG workflow reference"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+assistant = [
+  "langchain-core>=0.3",
+  "langgraph>=0.2",
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+]
+mineru-proxy = [
+  "fastapi>=0.115",
+  "httpx>=0.27",
+  "uvicorn[standard]>=0.30",
+]
+dev = ["pytest>=8"]
+
+[tool.setuptools]
+package-dir = {"" = "examples/electromagnetics/assistant"}
+
+[tool.setuptools.packages.find]
+where = ["examples/electromagnetics/assistant"]
+include = ["fdtd_assistant*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [
+  "examples/electromagnetics/ingestion",
+  "examples/electromagnetics/assistant",
+]

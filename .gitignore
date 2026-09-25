@@ -1,0 +1,33 @@
+# Secrets and per-machine configuration
+.env
+.env.*
+!.env.example
+config.json
+**/config.local.*
+
+# Local corpus, parsed files, indexes, and run outputs
+data/
+corpus/
+storage/
+mineru/
+evidence/
+quarantine/
+published/
+evaluation/
+*.sqlite
+*.sqlite3
+*.db
+*.pdf
+*.docx
+*.pptx
+*.xlsx
+*.zip
+*.log
+*.py[cod]
+__pycache__/
+.pytest_cache/
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
