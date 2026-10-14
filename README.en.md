@@ -1,16 +1,24 @@
-# Knowledge ingestion and RAG workflow
+# Knowledge Ingestion Harness
 
-A traceable workflow for discovering documents, preserving originals, parsing PDFs with MinerU, reviewing extracted claims against page-level evidence, routing approved material to RAGFlow datasets, and evaluating retrieval quality.
+A professional knowledge ingestion and review workbench, with a standalone web interface and optional Agnes Harness tools.
 
-The design is domain-adaptable. The runnable reference implementation included here comes from an electromagnetic-simulation project and still contains domain-specific scoring, extraction fields, and answer policies. Other domains need their own profile/extractor; changing search terms alone is not sufficient. See [domain adapters](docs/domain-adapters.md).
+## Features
 
-```text
-sources → deduplicate/rank → preserve original + hash → MinerU parse
-        → structured extraction with evidence → quality/admission gates
-        → route to a domain dataset → verify parse/chunks
-        → retrieval benchmark → analyze and iterate
+- Live RAGFlow library charts, document tables and actual chunk inspection.
+- Public-source discovery through OpenAlex/arXiv and parallel local-file ingestion.
+- Source, duplicate, parsing and chunk checks with per-item progress.
+- Persisted job history and recovery that checks existing document IDs without re-uploading.
+- Writes limited to new libraries created and registered by this workbench instance.
+- A 16-tool AGH plugin for planning, ingestion, review and evidence-backed knowledge packets.
+
+## Run
+
+Python 3.10+ and a RAGFlow instance with a configured embedding model are required. Set RAGFLOW_BASE_URL and RAGFLOW_API_KEY, then run:
+
+```
+python examples/knowledge-workbench-ui/server.py --port 4189
 ```
 
-Key principles: preserve source provenance, require evidence for extracted facts, quarantine uncertainty, keep domains separated, make retries idempotent, and compare a new parser/chunking configuration against a benchmark before replacing a working version.
+Open http://127.0.0.1:4189/ . Create a new target library from an available template before importing documents.
 
-The repository contains no user PDFs, Zotero database, runtime index, API keys, private endpoints, personal paths, or RAGFlow corpus. See [README.md](README.md) for setup and [SECURITY.md](SECURITY.md) for the safety boundary.
+See [deployment](docs/deployment.md), [AGH integration](docs/agnes-integration.md), and [domain adaptation](docs/domain-adapters.md). Existing electromagnetic CLI and optional retrieval-assistant examples remain available. MIT license; third-party services and documents retain their own licenses.

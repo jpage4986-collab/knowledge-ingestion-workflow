@@ -31,3 +31,11 @@ venv/
 dist/
 build/
 *.egg-info/
+
+# Workbench instance state and JS/runtime dependencies
+**/job-history.json
+**/sandbox-registry.json
+**/model-gate.json
+node_modules/
+.agh/
+*.dpapi

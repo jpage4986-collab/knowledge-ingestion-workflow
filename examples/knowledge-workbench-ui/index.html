@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fbfaf6">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'">
+  <title>Knowledge Ingestion Harness · 知识库工作台</title>
+  <link rel="stylesheet" href="styles.css?v=17">
+  <script src="app.js?v=17" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="wordmark" href="#overview" aria-label="知识库工作台总览">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span><strong>HARNESS</strong><small>KNOWLEDGE INGESTION</small></span>
+      </a>
+      <div class="topbar-status" id="topbarStatus" data-state="checking" aria-live="polite"><i></i><span id="topbarStatusText">连接服务中…</span></div>
+    </header>
+
+    <div class="workspace">
+      <aside class="sidebar" aria-label="工作台导航">
+        <div class="workspace-label"><span class="eyebrow">WORKSPACE</span><strong>专业知识库</strong><small>资料采集与知识管理</small></div>
+        <nav class="side-nav" aria-label="页面区域">
+          <span class="eyebrow">工作台</span>
+          <a class="side-link" href="#intake"><span class="side-number">01</span>新建入库</a>
+          <a class="side-link active" href="#overview"><span class="side-number">02</span>运行总览</a>
+          <a class="side-link" href="#libraries"><span class="side-number">03</span>知识库分布</a>
+          <a class="side-link" href="#documents"><span class="side-number">04</span>文档与分块</a>
+          <a class="side-link" href="#pipeline"><span class="side-number">05</span>入库与审查</a>
+          <a class="side-link" href="#restored"><span class="side-number">06</span>重启恢复</a>
+        </nav>
+        <div class="sidebar-note"><span class="eyebrow">服务状态</span><strong><span class="mode-dot" id="sidebarDot"></span><span id="sidebarConnection">连接中</span></strong><p id="sidebarScope">知识库正在同步</p></div>
+      </aside>
+
+      <main class="content">
+        <section id="overview" class="page-heading">
+          <div><span class="eyebrow">KNOWLEDGE WORKSPACE</span><h1>专业知识库工作台</h1><p>资料采集、文档解析与知识资产管理。</p></div>
+          <div class="heading-actions"><span class="read-only-label"><i></i>存量知识库只读</span><button class="primary-btn" id="refreshButton" type="button"><svg aria-hidden="true" viewBox="0 0 16 16"><path d="M13 7a5 5 0 1 0 1 3M13 3v4H9"/></svg>刷新数据</button></div>
+        </section>
+
+        <section class="panel intake-panel" id="intake" aria-labelledby="intakeTitle">
+          <div class="panel-heading intake-heading"><div><span class="eyebrow">KNOWLEDGE INGESTION</span><h2 id="intakeTitle">新增专业资料</h2></div><span class="guard-label"><i></i>隔离知识库</span></div>
+          <div class="intake-grid">
+            <div class="intake-source">
+              <div class="source-tabs" role="tablist" aria-label="资料来源">
+                <button class="source-tab is-active" id="onlineTab" type="button" role="tab" aria-selected="true" aria-controls="onlinePane" data-source-tab="online">网上检索</button>
+                <button class="source-tab" id="localTab" type="button" role="tab" aria-selected="false" aria-controls="localPane" data-source-tab="local">本地资料</button>
+              </div>
+              <div class="source-pane" id="onlinePane" role="tabpanel" aria-labelledby="onlineTab">
+                <form class="discover-form" id="discoverForm">
+                  <label class="intake-label" for="topicQuery">专业主题</label>
+                  <div class="discover-controls"><input id="topicQuery" type="search" maxlength="300" placeholder="例如：二维材料介电常数与电磁波传播" autocomplete="off"><button class="secondary-btn" id="discoverButton" type="submit">只检索</button><button class="primary-btn" id="autoIngestButton" type="button" disabled>开始全自动入库</button></div>
+                  <div class="automation-controls"><label for="autoLimit">采集条数<select id="autoLimit"><option value="3">3 条</option><option value="6" selected>6 条</option><option value="9">9 条</option><option value="12">12 条</option></select></label><label for="parallelismSelect">并行任务<select id="parallelismSelect"><option value="1">1 路</option><option value="2">2 路</option><option value="3" selected>3 路</option><option value="4">4 路</option><option value="6">6 路</option></select></label><span>来源审查 → 下载 → 解析 → 分块核验</span></div>
+                  <small class="field-note">全自动模式并行检索 OpenAlex 与 arXiv，审查重复项与公开来源后下载入库。</small>
+                </form>
+                <div class="discovery-results" id="discoveryResults" aria-live="polite"><p class="empty-message">输入专业主题，开始检索相关文献。</p></div>
+              </div>
+              <div class="source-pane" id="localPane" role="tabpanel" aria-labelledby="localTab" hidden>
+                <div class="intake-label">选择本地资料</div>
+                <div class="file-pickers"><label class="secondary-btn" for="filePicker">选择文件</label><label class="secondary-btn" for="folderPicker">选择文件夹</label><input id="filePicker" type="file" multiple accept=".pdf,.txt,.md,.docx,.pptx,.xlsx,.csv,.html"><input id="folderPicker" type="file" multiple webkitdirectory directory accept=".pdf,.txt,.md,.docx,.pptx,.xlsx,.csv,.html"></div>
+                <small class="field-note">支持 PDF、TXT、MD、DOCX、PPTX、XLSX、CSV、HTML；单文件不超过 50 MB，每批最多 10 个、合计 95 MB。</small>
+                <div class="selected-files" id="selectedFiles"><p class="empty-message">所选资料会显示在这里。</p></div>
+                <div class="local-run-controls"><label for="localParallelism">并行任务<select id="localParallelism"><option value="1">1 路</option><option value="2">2 路</option><option value="3" selected>3 路</option><option value="4">4 路</option><option value="6">6 路</option></select></label><button class="primary-btn upload-button" id="uploadFilesButton" type="button" disabled>并行导入并审查</button></div>
+              </div>
+            </div>
+            <aside class="intake-target" aria-label="知识库设置">
+              <label class="intake-label" for="templateSelect">知识库模板</label>
+              <select id="templateSelect" class="intake-select" disabled><option>读取知识库配置…</option></select>
+              <button class="secondary-btn create-sandbox-btn" id="createSandboxButton" type="button" disabled>新建隔离知识库</button>
+              <div class="target-divider"><span>当前入库目标</span></div>
+              <label class="intake-label" for="sandboxSelect">知识库</label>
+              <select id="sandboxSelect" class="intake-select" disabled><option>新建隔离知识库以开始</option></select>
+              <small class="field-note">沿用模板向量与解析设置；MinerU 不可用时，新沙盒使用 DeepDOC。</small>
+              <div class="intake-feedback" id="intakeFeedback" role="status" aria-live="polite">选择资料来源和入库目标，即可开始构建专业知识库。</div>
+            </aside>
+          </div>
+          <div class="run-trace" id="runTrace" aria-live="polite"><span class="trace-label">最近活动</span><span id="runTraceText">尚无入库任务。</span></div>
+        </section>
+
+        <section class="panel process-panel" id="pipeline" aria-labelledby="pipelineTitle">
+          <div class="panel-heading process-heading"><div><span class="eyebrow">INGESTION CONTROL ROOM</span><h2 id="pipelineTitle">入库过程与审查</h2></div><div class="process-heading-meta"><span class="chart-unit" id="jobTarget">选择隔离知识库开始入库</span><span class="job-status-badge" id="jobStatusBadge" data-state="idle">待命</span></div></div>
+          <div class="job-overview">
+            <div class="job-progress-copy"><strong id="jobProgressText">等待入库任务</strong><span id="jobProgressMeta">执行记录与审查结果将在此汇总</span></div>
+            <div class="job-progress-track" role="progressbar" aria-label="入库总进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="jobProgressBar"></i></div>
+            <div class="job-metrics" id="jobMetrics" aria-label="任务统计"></div>
+          </div>
+          <div class="stage-map" id="jobStages" aria-label="入库流程阶段"></div>
+          <div class="job-table-wrap"><table class="job-table"><thead><tr><th>资料与来源</th><th>来源审查</th><th>采集校验</th><th>解析入库</th><th>分块审查</th><th>当前状态</th></tr></thead><tbody id="jobItems"><tr><td colspan="6" class="table-message">开始一次全自动入库或本地并行导入，任务明细会显示在这里。</td></tr></tbody></table></div>
+          <div class="pipeline-foot"><span class="status-dot done"></span><span>分块审查读取实际入库内容，并检查抽样内容是否为空及长度分布。</span><span class="pipeline-status" id="pipelineConfig">规则审查 · RAGFlow</span></div>
+        </section>
+
+        <section class="panel restored-panel" id="restored" aria-labelledby="restoredTitle">
+          <div class="panel-heading"><div><span class="eyebrow">TASK RECOVERY</span><h2 id="restoredTitle">重启恢复与任务历史</h2></div><span class="chart-unit" id="restoredJobsNote">任务与文档标识持续保存，可继续检查中断任务。</span></div>
+          <div class="restored-list" id="restoredJobList"><p class="empty-message">正在读取此前的入库任务…</p></div>
+        </section>
+
+        <section class="kpi-grid" aria-label="知识库统计">
+          <article class="kpi-card"><span class="eyebrow">KNOWLEDGE BASES</span><strong id="kpiDatasets">·</strong><small>个知识库</small><span class="kpi-icon" aria-hidden="true">▤</span></article>
+          <article class="kpi-card"><span class="eyebrow">DOCUMENTS</span><strong id="kpiDocuments">·</strong><small>篇文档</small><span class="kpi-icon" aria-hidden="true">▧</span></article>
+          <article class="kpi-card"><span class="eyebrow">VALID PARSE</span><strong id="kpiParsed">·</strong><small>解析完成并生成分块</small><span class="kpi-icon" aria-hidden="true">✓</span></article>
+          <article class="kpi-card"><span class="eyebrow">CHUNKS</span><strong id="kpiChunks">·</strong><small>个检索分块</small><span class="kpi-icon" aria-hidden="true">≋</span></article>
+        </section>
+
+        <div class="visual-grid">
+          <section class="panel chart-panel" id="libraries" aria-labelledby="librariesTitle">
+            <div class="panel-heading"><div><span class="eyebrow">LIBRARY INVENTORY</span><h2 id="librariesTitle">知识库资产分布</h2></div><span class="chart-unit">文档 · 分块</span></div>
+            <div class="dataset-chart" id="datasetChart" aria-live="polite"><div class="loading-line">正在读取知识库…</div></div>
+            <div class="chart-legend"><span><i class="legend-docs"></i>文档数</span><span><i class="legend-chunks"></i>分块数</span><small>选择知识库查看文档</small></div>
+          </section>
+
+          <section class="panel chart-panel status-panel" aria-labelledby="statusTitle">
+            <div class="panel-heading"><div><span class="eyebrow">DOCUMENT PROCESSING</span><h2 id="statusTitle">文档处理进度</h2></div><span class="chart-unit" id="statusTotal">· 篇</span></div>
+            <div class="status-chart" id="statusChart" aria-live="polite"><div class="loading-line">正在汇总解析状态…</div></div>
+          </section>
+        </div>
+
+        <section class="panel documents-panel" id="documents" aria-labelledby="documentsTitle">
+          <div class="panel-heading documents-heading"><div><span class="eyebrow">LIVE DOCUMENT RECORDS</span><h2 id="documentsTitle">文档与分块</h2></div><span class="record-count" id="recordCount">读取中…</span></div>
+          <div class="document-toolbar">
+            <label class="toolbar-field"><span>知识库</span><select id="datasetSelect" disabled><option>读取中…</option></select></label>
+            <label class="search-field"><span class="sr-only">搜索文档</span><svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="6.8" cy="6.8" r="4.6"/><path d="m10.2 10.2 3.3 3.3"/></svg><input id="searchInput" type="search" placeholder="搜索文档名、格式…" autocomplete="off" disabled></label>
+            <label class="toolbar-field status-filter"><span>解析状态</span><select id="runSelect" disabled><option value="">全部状态</option></select></label>
+            <button class="quiet-btn" id="clearFilters" type="button" disabled>清除筛选</button>
+          </div>
+          <div class="document-layout">
+            <div class="document-list">
+              <div class="table-wrap"><table><thead><tr><th>文档</th><th>格式</th><th>解析状态</th><th>分块</th><th>更新时间</th></tr></thead><tbody id="documentRows"><tr><td colspan="5" class="table-message">正在连接知识库…</td></tr></tbody></table></div>
+              <div class="pagination"><span id="pageMeta">·</span><div><button class="page-btn" id="prevPage" type="button" disabled aria-label="上一页">←</button><button class="page-btn" id="nextPage" type="button" disabled aria-label="下一页">→</button></div></div>
+            </div>
+            <aside class="document-detail" aria-labelledby="detailTitle">
+              <div class="detail-heading"><span class="eyebrow">DOCUMENT DETAILS</span><span class="inspector-icon" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M4 3h12v14H4zM7 7h6M7 10h6M7 13h3"/></svg></span></div>
+              <h3 id="detailTitle">选择一篇文档</h3>
+              <p class="detail-subtitle" id="detailSubtitle">文档属性与解析分块。</p>
+              <dl class="detail-metadata" id="detailMetadata"><div><dt>解析状态</dt><dd>·</dd></div><div><dt>分块</dt><dd>·</dd></div><div><dt>文件大小</dt><dd>·</dd></div><div><dt>来源类型</dt><dd>·</dd></div></dl>
+              <div class="chunk-heading"><span>分块内容</span><span id="chunkCount">选择文档后读取</span></div>
+              <div class="chunk-list" id="chunkList"><p class="empty-detail">选择文档查看分块内容。</p></div>
+            </aside>
+          </div>
+        </section>
+
+        <footer class="content-footer"><span>Knowledge Ingestion Harness · 专业知识库管理</span><span id="footerVersion">RAGFlow ·</span></footer>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,60 +1,48 @@
-# 面向任意领域的知识采集与 RAG 入库工作流
+# Knowledge Ingestion Harness
 
-这是一个可复用的自动化知识入库方案：从文献/资料发现开始，经过原件保存、MinerU 解析、带证据的质量审查、分库路由、RAGFlow 入库与检索评测，形成可追溯、可重试、可迭代的闭环。
+面向专业领域的知识采集、入库与审查工作台。通过自然语言或网页任务组织公开文献与本地资料，将来源发现、资料获取、并行解析、分块核验及审查反馈连接为可追踪的工作流。
 
-> **当前代码范围：**本仓库的工作流设计面向任意知识领域；随仓库发布的可运行参考实现来自电磁仿真项目，因此其检索评分、参数字段和回答策略仍有领域专用逻辑。要用于其他领域，需要提供对应的领域配置/抽取器，不能只改标题或搜索词。这个边界在 [领域适配说明](docs/domain-adapters.md) 中列出。
+[English](README.en.md) · [部署说明](docs/deployment.md) · [AGH接入](docs/agnes-integration.md) · [架构](docs/architecture.md) · [领域适配](docs/domain-adapters.md)
 
-中文说明 · [English overview](README.en.md) · [架构与数据流](docs/architecture.md) · [安全边界](SECURITY.md)
+## 功能
 
-## 工作流一览
+- **真实资产可视化**：知识库分布图、文档处理统计、文档筛选与分页、实际分块及表格查看。
+- **自动与并行入库**：OpenAlex/arXiv来源发现、公开PDF获取、浏览器选取本地文件或目录、逐项处理进度。
+- **可检查的审查流程**：来源、重复、文件与解析检查，读取实际分块后给出规则核验结果；AGH可进一步开展专业审查。
+- **历史与恢复**：任务、检查结果及文档标识持续保存；重启后继续检查已上传文档，避免恢复时重复上传。
+- **现有库保护**：已有知识库用于读取；工作台的写入目标限定为本实例创建并登记的新库，名称标记本身不能授予写权限。
+- **AGH工具接入**：16项业务工具支持项目读取、资产盘点、来源发现、入库执行、状态读取、证据核验、恢复与知识包输出。
 
-```text
-可配置来源（Zotero / 开放文献 API / 本地资料）
-  → 候选去重与准入排序
-  → 保存原始文件并计算哈希
-  → MinerU 全页解析 PDF
-  → 抽取结构化信息、逐字段关联原文证据
-  → 解析质量 + 来源质量 + 领域审查三道门
-      ├─ 不通过：隔离、记录原因，不进入检索库
-      └─ 通过：按知识域写入目标 RAGFlow 数据集
-  → 确认解析完成且分块非空
-  → 检索基准测试、错误分析与分块策略迭代
-```
+## 快速启动
 
-## 设计原则
-
-- **原件优先、可追溯：**保留来源链接、文档哈希、页码/段落证据、解析状态与 RAGFlow 文档 ID；摘要和抽取字段不能取代原始 PDF。
-- **证据门禁，不让模型自证：**模型只提出候选结论；确定性检查会核对字段证据是否能在解析文本中定位，缺证据、字段冲突或解析异常就隔离。
-- **知识域分库：**用数据集映射分开存储不同类型的知识；每个库单独配置解析器、向量模型和检索评测集，避免跨域噪声。
-- **可恢复且幂等：**SQLite 索引记录来源标识、哈希、处理阶段和远端 ID；重试前先核对状态，避免重复上传。
-- **先测再替换：**解析/分块的新版本先与基准比较，未通过门槛时保留已有可用版本。
-- **最小权限：**Zotero 走只读访问；开放文献来源只下载可合法获取的文件；密钥仅从环境变量读取；默认关闭远端写入。
-
-## 运行参考实现
-
-随仓库附带的命令行参考实现位于 `examples/electromagnetics/ingestion/`。它需要本机 Zotero（或本地 Zotero 数据库）、MinerU、RAGFlow，以及可选的审查模型。启动任何远端写入前，先复制并填写 `examples/electromagnetics/ingestion/config.example.json`，设置所需的环境变量，并执行只读预检。
+需要Python 3.10+及一个可访问的RAGFlow实例，RAGFlow须配置可用embedding模型。网页及Python标准库HTTP后端无需Node或前端构建步骤。
 
 ```powershell
-Copy-Item examples/electromagnetics/ingestion/config.example.json examples/electromagnetics/ingestion/config.json
-$env:MODEL_API_KEY = "<本机环境变量中的模型密钥>"
-$env:RAGFLOW_API_KEY = "<本机环境变量中的 RAGFlow 密钥>"
-python examples/electromagnetics/ingestion/sync_library.py --help
-python examples/electromagnetics/ingestion/sync_library.py --config examples/electromagnetics/ingestion/config.json preflight
+$env:RAGFLOW_BASE_URL = "http://127.0.0.1:9380"
+$env:RAGFLOW_API_KEY = "<你的 RAGFlow API Key>"
+python examples/knowledge-workbench-ui/server.py --port 4189
 ```
 
-不同版本的参考脚本 CLI 参数可能不同；先看 `--help`。不要将真实 `config.json`、`.env`、本地数据库、PDF 或解析产物提交到 Git。
+打开 http://127.0.0.1:4189/ 。选择实际解析与向量模板，创建新目标库，再从专业主题或本地文件开始任务。MinerU不可用时，新库可使用DeepDOC；现有库的配置保持原状。
 
-## 评估方式
+自然语言使用方法见[AGH接入](docs/agnes-integration.md)。AGH是可选智能体入口，网页工作台可独立运行。
 
-质量不是单一 LLM 分数。入库前分别检查来源可追溯性、PDF 解析完整度、字段证据覆盖/冲突、领域相关性和分块结构；入库后用带标注的查询集检查命中、证据覆盖和引用定位。调整分块参数时保留基线结果，并比较新旧版本。离线结构测试通过不代表语义准确率达到 100%；每个领域都需要自己的基准集。
+## 专业领域与原有CLI
 
-## 仓库内容与排除项
+电磁仿真是当前参考领域，包含教材、材料参数、论文方法、软件手册、案例与代码的组织思路。新领域通过类别、字段、来源、审查规则及评测集适配。入库规则核验与专业结论验证是不同环节，领域字段需要回指原文证据。
 
-- `examples/electromagnetics/`：来自电磁仿真项目的参考代码，不包含用户文献库或运行配置。
-- `tests/`：可离线运行的单元测试；不会自动连接 Zotero、模型服务或 RAGFlow。
-- `docs/`：系统边界、数据流和其他领域的适配点。
-- 不发布任何论文 PDF、Zotero 数据库、RAGFlow 数据集/文档 ID、API Key、真实服务地址、个人磁盘路径、运行数据库或用户的评测结果。
+原有`examples/electromagnetics/ingestion/`保留Zotero、MinerU、质量门禁、分库路由和检索评测入口；可选问答示例位于`examples/electromagnetics/assistant/`。CLI与网页有各自的配置与执行路径，见[部署说明](docs/deployment.md)。
 
-## 许可
+## 目录
 
-本仓库代码采用 MIT License。第三方服务、模型、文献和软件的授权仍由各自提供方的条款决定；本仓库不转授权外部内容。
+| 目录 | 用途 |
+|---|---|
+| examples/knowledge-workbench-ui | 网页、标准库后端、持久任务与独立测试 |
+| plugins/knowledge-ingestion | AGH业务工具插件 |
+| examples/electromagnetics | 专业CLI及可选检索助手参考 |
+| docs | 部署、架构与领域适配 |
+| tests | 原有离线单元测试 |
+
+## 配置与数据
+
+API Key通过环境变量提供。任务历史、新库登记和知识包属于本地运行数据，Git默认忽略；每个部署实例使用自己的服务、账户及资料。开源代码遵循MIT许可；AGH、外部服务、模型和文献遵循各自许可。
